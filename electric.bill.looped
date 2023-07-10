@@ -1,0 +1,147 @@
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Scanner;
+
+class ElectricityBillCalculator implements Runnable {
+    private int units;
+    private double amount;
+
+    public ElectricityBillCalculator(int units) {
+        this.units = units;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    @Override
+    public void run() {
+        synchronized (this) {
+            // Check the number of units and calculate the bill
+          	if (unit >= 0 && unit <= 50) {
+            amount = unit * 2.5f;
+        } else if (unit >= 50 && unit <= 200) {
+            amount = (unit - 50) * 4.3f + 125;
+        } else if (unit >= 200 && unit <= 400) {
+            amount = (unit - 200) * 5.3f + 125 + 645;
+        } else {
+            amount = (unit - 400) * 5.7f + 125 + 645 + 1060;
+          }	
+        }
+    }
+}
+
+class HouseNumberInput implements Runnable {
+    private int houseNumber;
+
+    public int getHouseNumber() {
+        return houseNumber;
+    }
+
+    @Override
+    public void run() {
+        synchronized (this) {
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Enter the house number: ");
+            houseNumber = scanner.nextInt();
+        }
+    }
+}
+
+class CurrentDateTimeFetcher implements Runnable {
+    private LocalDateTime currentDateTime;
+
+    public LocalDateTime getCurrentDateTime() {
+        return currentDateTime;
+    }
+
+    @Override
+    public void run() {
+        synchronized (this) {
+            currentDateTime = LocalDateTime.now();
+        }
+    }
+}
+
+class ProgramLoopInput implements Runnable {
+    private boolean shouldLoop;
+
+    public boolean shouldLoop() {
+        return shouldLoop;
+    }
+
+    @Override
+    public void run() {
+        synchronized (this) {
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Do you want to loop the program? (Y/N): ");
+            String input = scanner.nextLine();
+            shouldLoop = input.equalsIgnoreCase("Y");
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        do {
+            HouseNumberInput houseNumberInput = new HouseNumberInput();
+            Thread houseNumberThread = new Thread(houseNumberInput);
+            houseNumberThread.start();
+
+            try {
+                houseNumberThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            int houseNumber = houseNumberInput.getHouseNumber();
+
+            System.out.print("Enter the number of units consumed: ");
+            Scanner scanner = new Scanner(System.in);
+            int units = scanner.nextInt();
+
+            ElectricityBillCalculator calculator = new ElectricityBillCalculator(units);
+            Thread billThread = new Thread(calculator);
+            billThread.start();
+
+            try {
+                billThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            double billAmount = calculator.getAmount();
+            System.out.println("House number: " + houseNumber);
+            System.out.println("Electricity bill to pay: $" + billAmount);
+
+            CurrentDateTimeFetcher dateTimeFetcher = new CurrentDateTimeFetcher();
+            Thread dateTimeThread = new Thread(dateTimeFetcher);
+            dateTimeThread.start();
+
+            try {
+                dateTimeThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            LocalDateTime currentDateTime = dateTimeFetcher.getCurrentDateTime();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String formattedDateTime = currentDateTime.format(formatter);
+            System.out.println("Current Date and Time: " + formattedDateTime);
+
+            ProgramLoopInput loopInput = new ProgramLoopInput();
+            Thread loopThread = new Thread(loopInput);
+            loopThread.start();
+
+            try {
+                loopThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            if (!loopInput.shouldLoop()) {
+                break;
+            }
+        } while (true);
+    }
+}
